@@ -1,10 +1,15 @@
 import * as React from 'react';
 import { LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { createStackNavigator } from '@react-navigation/stack';
 import { Movie, MovieService } from 'showveo-lib';
 
 import ImageTile from '../components/image-tile';
 
 import BaseScreen from './base';
+
+
+const Stack = createStackNavigator();
+
 
 interface IMoviesScreenProps {
     navigation: any;
@@ -45,6 +50,7 @@ export default class MoviesScreen extends React.Component<IMoviesScreenProps, IM
                         key={movie.name + movie.year}
                         movie={movie}
                         width={this.state.tileWidth}
+                        onClick={() => this.props.navigation.navigate('options', { media: movie })}
                     />
                 ))}
             </ScrollView>
@@ -52,7 +58,7 @@ export default class MoviesScreen extends React.Component<IMoviesScreenProps, IM
     }
 }
 
-class MovieTile extends React.Component<{ movie: Movie, width: number, index: number }, {}> {
+class MovieTile extends React.Component<{ movie: Movie, width: number, index: number, onClick: () => void }, {}> {
     render() {
         const movie = this.props.movie,
             index = this.props.index;
@@ -61,7 +67,7 @@ class MovieTile extends React.Component<{ movie: Movie, width: number, index: nu
             style={{ marginTop: index === 0 ? 0 : 30 }}
             image={movie.backdrop}
             width={this.props.width}
-            onClick={() => {}}
+            onClick={() => this.props.onClick()}
         >
             <View style={styles.contents}>
                 <Text style={styles.name}>{movie.name}</Text>

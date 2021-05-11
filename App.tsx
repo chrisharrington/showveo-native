@@ -36,14 +36,14 @@ export default class App extends React.Component<{}, IAppState> {
             />
 
             <Drawer.Navigator
-                initialRouteName={'Movies'}
+                initialRouteName='movies'
                 drawerStyle={styles.drawer}
                 drawerContentOptions={{
                     activeTintColor: '#0398fc',
                     inactiveTintColor: '#ffffff'
                 }}
             >
-                <Drawer.Screen name='Movies'>
+                <Drawer.Screen name='movies'>
                     {props => <MoviesScreen
                         navigation={props.navigation}
                     />}
