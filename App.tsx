@@ -5,50 +5,71 @@ import AppLoading from 'expo-app-loading';
 import * as Font from 'expo-font';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-
-import MoviesScreen from './lib/screens/movies';
-
 import { Oswald_400Regular } from '@expo-google-fonts/oswald';
+
+import { Device, DeviceService } from 'showveo-lib';
+
+import MoviesListScreen from './lib/screens/movies';
+import { Toast } from './lib/components/toast';
+
 
 const Drawer = createDrawerNavigator();
 
-interface IAppState {
+interface AppState {
     ready: boolean;
+    devices: Device[];
+    selectedDevice: Device | null;
 }
 
-export default class App extends React.Component<{}, IAppState> {
+export default class App extends React.Component<{}, AppState> {
+    private toast: Toast;
+
     state = {
-        ready: false
+        ready: false,
+        devices: [],
+        selectedDevice: null
     }
 
     async componentDidMount() {
-        await Font.loadAsync({
-            'Oswald': Oswald_400Regular
-        });
+        const [_, devices] = await Promise.all([
+            Font.loadAsync({ 'Oswald': Oswald_400Regular }),
+            DeviceService.getAll()
+        ]);
 
-        this.setState({ ready: true });
+        this.setState({
+            ready: true,
+            devices
+        });
     }
 
     render() {
-        return this.state.ready ? <NavigationContainer>
+        return this.state.ready ? <NavigationContainer theme={{ colors: { background: '#222' }} as any}>
             <StatusBar
                 style='light'
             />
 
             <Drawer.Navigator
-                initialRouteName='movies'
+                initialRouteName='Movies'
                 drawerStyle={styles.drawer}
                 drawerContentOptions={{
                     activeTintColor: '#0398fc',
                     inactiveTintColor: '#ffffff'
                 }}
             >
-                <Drawer.Screen name='movies'>
-                    {props => <MoviesScreen
+                <Drawer.Screen name='Movies'>
+                    {props => <MoviesListScreen
                         navigation={props.navigation}
+                        devices={this.state.devices}
+                        selectedDevice={this.state.selectedDevice}
+                        onError={(message: string) => this.toast.error(message)}
+                        onDeviceSelected={(device: Device) => this.setState({ selectedDevice: device })}
                     />}
                 </Drawer.Screen>
             </Drawer.Navigator>
+
+            <Toast
+                ref={c => this.toast = c as Toast}
+            />
         </NavigationContainer> : <AppLoading />;
     }
 }

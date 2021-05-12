@@ -5,7 +5,6 @@ interface IImageTileProps {
     image: string;
     width: number;
     style?: any;
-    onClick: () => void;
 }
 
 export default class ImageTile extends React.Component<IImageTileProps, {}> {
@@ -43,7 +42,7 @@ const styles = StyleSheet.create({
 
     image: {
         flex: 1,
-        opacity: 0.6
+        opacity: 0.8
     },
 
     content: {

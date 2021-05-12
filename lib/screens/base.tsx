@@ -2,17 +2,22 @@ import * as React from 'react';
 import { View, StyleSheet, StatusBar, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+
 interface IBaseScreenProps {
     title: string;
     navigation: any;
+    back?: boolean;
 }
 
 export default class BaseScreen extends React.Component<IBaseScreenProps, {}> {
     render() {
+        const back = this.props.back,
+            navigation = this.props.navigation;
+
         return <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity style={styles.headerIcon} onPress={() => this.props.navigation.openDrawer()}>
-                    <Ionicons name='md-menu' color='#ffffff' size={32} />
+                <TouchableOpacity style={styles.headerIcon} onPress={() => back ? navigation.goBack() : navigation.openDrawer()}>
+                    <Ionicons name={back ? 'md-arrow-back-outline' : 'md-menu'} color='#ffffff' size={back ? 24 : 32} />
                 </TouchableOpacity>
                 <View style={styles.innerHeader}>
                     <Text style={styles.innerHeaderText}>{this.props.title}</Text>
