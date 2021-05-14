@@ -59,6 +59,8 @@ export class Select extends React.Component<SelectProps, SelectState> {
                 animationOut='fadeOutDown'
                 animationInTiming={200}
                 animationOutTiming={200}
+                onBackButtonPress={this.hide}
+                onBackdropPress={this.hide}
             >
                 <View style={styles.inner}>
                     <FlatList<SelectItem>
@@ -76,6 +78,8 @@ export class Select extends React.Component<SelectProps, SelectState> {
         this.setState({ visible: false });
         this.props.onSelect(value);
     }
+
+    private hide = () => this.setState({ visible: false });
 
     private renderItem = ({ item, index } : { item: SelectItem, index: number}) => (
         <TouchableOpacity

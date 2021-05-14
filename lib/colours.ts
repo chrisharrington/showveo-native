@@ -9,7 +9,7 @@ export default class Colours {
 
     static highlight = {
         default: '#46A2F1',
-        dark: '#0b406e'
+        dark: '#153754'
     };
 
     static text = {

@@ -38,7 +38,8 @@ export default class App extends React.Component<{}, AppState> {
 
         this.setState({
             ready: true,
-            devices
+            devices,
+            selectedDevice: devices[0]
         });
     }
 

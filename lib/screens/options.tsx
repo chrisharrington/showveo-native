@@ -1,13 +1,14 @@
 import * as React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, ImageBackground } from 'react-native';
 
 import { Device, Media } from 'showveo-lib';
 
 import { Select, SelectItem } from '../components/select';
-import Switch from '../components/switch';
+import Button from '../components/button';
 import Colours from '../colours';
 
 import BaseScreen from './base';
+import Mixins from '../mixins';
 
 
 interface OptionsScreenProps {
@@ -31,8 +32,9 @@ export default class OptionsScreen extends React.Component<OptionsScreenProps, O
     }
 
     render() {
+        const media = this.props.media;
         return <BaseScreen
-            title={this.props.media.name}
+            title={media.name}
             navigation={this.props.navigation}
             back={true}
         >
@@ -48,21 +50,17 @@ export default class OptionsScreen extends React.Component<OptionsScreenProps, O
 
                 <View style={styles.option}>
                     <Text style={styles.label}>Subtitles</Text>
-                    <Switch
-                        enabled={this.state.subtitles}
-                        onChange={(subtitles: boolean) => this.setState({ subtitles })}
-                        onLabel='English'
-                        offLabel='None'
+                    <Select
+                        items={['None', 'English'].map((subtitle: string) => (new SelectItem(subtitle, subtitle)))}
+                        selected={this.state.subtitles ? 'English' : 'None'}
+                        onSelect={(subtitle: string) => this.setState({ subtitles: subtitle === 'English' })}
                     />
                 </View>
 
-                <View style={styles.option}>
-                    <Text style={styles.label}>Start Time</Text>
-                    <Switch
-                        enabled={this.state.resume}
-                        onChange={(resume: boolean) => this.setState({ resume })}
-                        onLabel='Play from 1:23:45'
-                        offLabel='Play from beginning'
+                <View style={styles.buttons}>
+                    <Button
+                        label='Play'
+                        onPress={() => {}}
                     />
                 </View>
             </View>
@@ -72,6 +70,7 @@ export default class OptionsScreen extends React.Component<OptionsScreenProps, O
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         padding: 15,
     },
 
@@ -84,6 +83,13 @@ const styles = StyleSheet.create({
         color: Colours.text.default,
         fontFamily: 'Oswald',
         textTransform: 'uppercase',
-        marginBottom: 10
+        marginBottom: 10,
+        ...Mixins.textShadow()
+    },
+
+    buttons: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        marginBottom: 15,
     }
 });
