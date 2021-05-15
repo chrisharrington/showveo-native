@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { Text, View, StyleSheet, ImageBackground } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 
-import { Device, Media } from 'showveo-lib';
+import { Media } from 'showveo-lib';
 
 import { Select, SelectItem } from '../components/select';
 import Button from '../components/button';
-import Colours from '../colours';
 
 import BaseScreen from './base';
 import Mixins from '../mixins';
@@ -14,10 +13,6 @@ import Mixins from '../mixins';
 interface OptionsScreenProps {
     navigation: any;
     media: Media;
-    devices: Device[];
-    onDeviceSelected: (device: Device) => void;
-
-    selectedDevice: Device | null;
 }
 
 interface OptionsScreenState {
@@ -40,15 +35,6 @@ export default class OptionsScreen extends React.Component<OptionsScreenProps, O
         >
             <View style={styles.container}>
                 <View style={styles.option}>
-                    <Text style={styles.label}>Device</Text>
-                    <Select
-                        items={this.props.devices.map((device: Device) => (new SelectItem(device.name, device.id)))}
-                        selected={this.props.selectedDevice?.name}
-                        onSelect={(value: string) => this.props.onDeviceSelected(this.props.devices.find((device: Device) => device.id === value) as Device)}
-                    />
-                </View>
-
-                <View style={styles.option}>
                     <Text style={styles.label}>Subtitles</Text>
                     <Select
                         items={['None', 'English'].map((subtitle: string) => (new SelectItem(subtitle, subtitle)))}
@@ -60,7 +46,7 @@ export default class OptionsScreen extends React.Component<OptionsScreenProps, O
                 <View style={styles.buttons}>
                     <Button
                         label='Play'
-                        onPress={() => {}}
+                        onPress={() => this.props.navigation.navigate('cast', { media })}
                     />
                 </View>
             </View>
@@ -79,12 +65,7 @@ const styles = StyleSheet.create({
     },
 
     label: {
-        fontSize: 14,
-        color: Colours.text.default,
-        fontFamily: 'Oswald',
-        textTransform: 'uppercase',
-        marginBottom: 10,
-        ...Mixins.textShadow()
+        ...Mixins.label()
     },
 
     buttons: {

@@ -8,26 +8,24 @@ import BaseScreen from '../base';
 
 interface MoviesListScreenProps {
     navigation: any;
+    movies: Movie[];
     onClick: (media: Media) => void;
 }
 
 interface MoviesListScreenState {
     loading: boolean;
-    movies: Movie[];
     tileWidth: number;
 }
 
 export default class MoviesListScreen extends React.Component<MoviesListScreenProps, MoviesListScreenState> {
     state = {
         loading: true,
-        movies: [],
         tileWidth: 0
     }
 
     async componentDidMount() {
         this.setState({
             loading: false,
-            movies: await MovieService.getAll(0, 1000),
             tileWidth: Dimensions.get('window').width
         });
     }
@@ -39,7 +37,7 @@ export default class MoviesListScreen extends React.Component<MoviesListScreenPr
         >
             <FlatList<Movie>
                 style={styles.container}
-                data={this.state.movies}
+                data={this.props.movies}
                 initialNumToRender={5}
                 renderItem={this.renderItem}
                 keyExtractor={this.keyExtractor}

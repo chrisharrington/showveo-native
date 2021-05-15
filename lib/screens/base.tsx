@@ -3,13 +3,13 @@ import { View, StyleSheet, StatusBar, TouchableOpacity, Text } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 
 
-interface IBaseScreenProps {
+interface BaseScreenProps {
     title: string;
     navigation: any;
     back?: boolean;
 }
 
-export default class BaseScreen extends React.Component<IBaseScreenProps, {}> {
+export default class BaseScreen extends React.Component<BaseScreenProps, {}> {
     render() {
         const back = this.props.back,
             navigation = this.props.navigation;
