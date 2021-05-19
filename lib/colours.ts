@@ -9,7 +9,8 @@ export default class Colours {
 
     static highlight = {
         default: '#46A2F1',
-        dark: '#153754'
+        dark: '#23659e',
+        darkest: '#153754'
     };
 
     static text = {
@@ -17,7 +18,8 @@ export default class Colours {
         inverse: '#000000',
         lowlight: '#aaaaaa',
         success: '#1edf24',
-        error: '#FA4539'
+        error: '#FA4539',
+        disabled: '#707070'
     };
 
     static button = {

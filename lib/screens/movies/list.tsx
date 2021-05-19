@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { FlatList, LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native'
-import { Media, Movie, MovieService } from 'showveo-lib';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native'
+import { Movie } from 'showveo-lib';
 
 import ImageTile from '../../components/image-tile';
 
@@ -9,7 +9,7 @@ import BaseScreen from '../base';
 interface MoviesListScreenProps {
     navigation: any;
     movies: Movie[];
-    onClick: (media: Media) => void;
+    onClick: (movie: Movie) => void;
 }
 
 interface MoviesListScreenState {

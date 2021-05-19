@@ -4,20 +4,22 @@ import Colours from '../colours';
 import Dimensions from './dimensions';
 
 
-interface SliderProps<TModel> {
+interface MenuProps<TModel> {
     renderItem: ({ item, index } : { item: TModel, index: number }) => JSX.Element,
     keyExtractor: (item: TModel) => string;
     data: TModel[];
 }
 
-interface SliderState {
+interface MenuState {
     position: Animated.Value;
     opacity: Animated.Value;
     height: number;
     visible: boolean;
 }
 
-export default class Slider<TModel> extends React.Component<SliderProps<TModel>, SliderState> {
+export default class Menu<TModel> extends React.Component<MenuProps<TModel>, MenuState> {
+    private onBackHandler: any;
+
     state = {
         position: new Animated.Value(0),
         opacity: new Animated.Value(0),
@@ -26,12 +28,12 @@ export default class Slider<TModel> extends React.Component<SliderProps<TModel>,
     }
 
     componentDidMount() {
-        BackHandler.addEventListener('hardwareBackPress', () => {
-            if (this.state.visible) {
-                this.hide();
-                return true;
-            }
-        });
+        this.onBackHandler = this.onBack.bind(this);
+        BackHandler.addEventListener('hardwareBackPress', this.onBackHandler);
+    }
+
+    componentWillUnmount() {
+        BackHandler.removeEventListener('hardwareBackPress', this.onBackHandler);
     }
 
     show() {
@@ -50,7 +52,7 @@ export default class Slider<TModel> extends React.Component<SliderProps<TModel>,
         return <View style={styles.container}>
             <Animated.View
                 style={[
-                    styles.slider,
+                    styles.menu,
                     { transform: [{ translateY: this.state.position }] }
                 ]}
                 onLayout={event => this.setState({ height: event.nativeEvent.layout.height })}
@@ -77,6 +79,15 @@ export default class Slider<TModel> extends React.Component<SliderProps<TModel>,
             easing: Easing.out(Easing.ease)
         })
     );
+
+    private onBack() {
+        if (this.state.visible) {
+            this.hide();
+            return true;
+        }
+
+        return false;
+    }
 }
 
 const styles = StyleSheet.create({
@@ -85,7 +96,7 @@ const styles = StyleSheet.create({
         top: 0
     },
     
-    slider: {
+    menu: {
         position: 'absolute',
         zIndex: 3,
         elevation: 3,

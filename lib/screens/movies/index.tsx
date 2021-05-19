@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, TouchableHighlight } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Device, Media, Movie, MovieService } from 'showveo-lib';
+import { Device, Movie, MovieService } from 'showveo-lib';
 
 import CastScreen from '../cast';
 import Colours from '../../colours';
-import Slider from '../../components/slider';
+import Menu from '../../components/menu';
+import Dimensions from '../../components/dimensions';
 
 import MoviesListScreen from './list';
 
@@ -28,11 +29,12 @@ interface MoviesScreenState {
     deviceListVisible: boolean;
     devicesHeight: number;
     devicesPosition: Animated.Value;
-    selectedMedia: Media | null;
+    selectedMovie: Movie | null;
+    selectedDevice: Device | null;
 }
 
 export default class MoviesScreen extends React.Component<MoviesScreenProps, MoviesScreenState> {
-    private slider: Slider<Device>;
+    private slider: Menu<Device>;
 
     state = {
         loading: true,
@@ -41,7 +43,8 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
         deviceListVisible: false,
         devicesHeight: 0,
         devicesPosition: new Animated.Value(0),
-        selectedMedia: null
+        selectedMovie: null,
+        selectedDevice: null
     }
 
     async componentDidMount() {
@@ -63,55 +66,66 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
                 screenOptions={{ headerShown: false }}
             >
                 <Stack.Screen name='movies'>
-                    {props => <MoviesListScreen
-                        navigation={props.navigation}
-                        movies={this.state.movies}
-                        onClick={(media: Media) => this.onMediaSelected(media)}
-                    />}
+                    {props => <>
+                        <MoviesListScreen
+                            navigation={props.navigation}
+                            movies={this.state.movies}
+                            onClick={(movie: Movie) => this.onMovieSelected(movie)}
+                        />
+
+                        <Menu<Device>
+                            ref={c => this.slider = c as Menu<Device>}
+                            renderItem={({ item, index }) => this.renderDevice(item, index, props)}
+                            keyExtractor={(device: Device) => device.id}
+                            data={this.props.devices}
+                        />
+                    </>}
                 </Stack.Screen>
-                {/* <Stack.Screen name='cast'>
+                <Stack.Screen name='cast'>
                     {props => <CastScreen
                         navigation={props.navigation}
-                        media={(props.route.params as any).media}
+                        media={this.state.selectedMovie}
+                        playable={this.state.selectedMovie}
+                        device={this.state.selectedDevice}
                     />}
-                </Stack.Screen> */}
+                </Stack.Screen>
             </Stack.Navigator>
-
-            <Slider<Device>
-                ref={c => this.slider = c as Slider<Device>}
-                renderItem={this.renderDevice}
-                keyExtractor={(device: Device) => device.id}
-                data={this.props.devices}
-            />
         </View>;
     }
 
-    private renderDevice = ({ item, index } : { item: Device, index: number }) => (
-        <TouchableOpacity
-            style={[styles.device, index === 0 ? styles.first : {}]}
-            key={item.id}
-            onPress={() => {}}
-        >
-            <Text style={{ color: Colours.text.default }}>{item.name}</Text>
-        </TouchableOpacity>
+    private renderDevice = (device: Device, index: number, props: any) => (
+        <View style={styles.deviceContainer}>
+            <TouchableOpacity
+                style={[styles.device, index === 0 ? styles.first : {}]}
+                key={device.id}
+                onPress={() => this.onDeviceSelected(device, props)}
+            >
+                <Text style={{ color: Colours.text.default }}>{device.name}</Text>
+            </TouchableOpacity>
+        </View>
     );
 
-    private onMediaSelected(media: Media) {
-        this.setState({
-            selectedMedia: media
-        });
-
+    private onMovieSelected(movie: Movie) {
+        this.setState({ selectedMovie: movie });
         this.slider.show();
+    }
+
+    private onDeviceSelected(device: Device, props: any) {
+        this.setState({ selectedDevice: device });
+        props.navigation.navigate('cast');
+        this.slider.hide();
     }
 }
 
-const dimensions = Dimensions.get('window');
-
 const styles = StyleSheet.create({
-    device: {
+    deviceContainer: {
         flex: 1,
         borderTopWidth: 1,
-        borderTopColor: Colours.border.default,
+        borderTopColor: Colours.border.default
+    },
+
+    device: {
+        flex: 1,
         paddingHorizontal: 15,
         paddingVertical: 15
     },
@@ -124,8 +138,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         zIndex: 2,
         elevation: 2,
-        width: dimensions.width,
-        height: dimensions.height,
+        width: Dimensions.width(),
+        height: Dimensions.height(),
         backgroundColor: 'black'
     }
 });

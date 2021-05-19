@@ -1,18 +1,20 @@
 import * as React from 'react';
-import { View, StyleSheet, StatusBar, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, StatusBar, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+import Colours from '../colours';
 
 
 interface BaseScreenProps {
     title: string;
     navigation: any;
     back?: boolean;
+    loading?: boolean;
 }
 
 export default class BaseScreen extends React.Component<BaseScreenProps, {}> {
     render() {
-        const back = this.props.back,
-            navigation = this.props.navigation;
+        const { back, navigation, loading } = this.props;
 
         return <View style={styles.container}>
             <View style={styles.header}>
@@ -22,6 +24,13 @@ export default class BaseScreen extends React.Component<BaseScreenProps, {}> {
                 <View style={styles.innerHeader}>
                     <Text style={styles.innerHeaderText}>{this.props.title}</Text>
                 </View>
+                {loading && <View style={styles.loadingContainer}>
+                    <ActivityIndicator
+                        animating={loading}
+                        color={Colours.highlight.default}
+                        size={28}
+                    />
+                </View>}
             </View>
         
             <View style={styles.children}>
@@ -47,6 +56,7 @@ const styles = StyleSheet.create({
     },
 
     headerIcon: {
+        width: 50,
         height: 60,
         justifyContent: 'center',
         paddingLeft: 15,
@@ -54,6 +64,7 @@ const styles = StyleSheet.create({
     },
 
     innerHeader: {
+        flex: 1,
         height: 60,
         justifyContent: 'center',
         marginLeft: 10
@@ -67,5 +78,11 @@ const styles = StyleSheet.create({
     children: {
         flex: 1,
         marginTop: (StatusBar.currentHeight || 0) + 60
+    },
+
+    loadingContainer: {
+        width: 28,
+        justifyContent: 'center',
+        paddingRight: 25
     }
 });
