@@ -42,8 +42,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
     async componentDidMount() {
         this.castable = new Castable(
             this.props.playable as Playable,
-            new PlayOptions(this.props.device as Device, false, false),
-            PlayableType.Movie
+            new PlayOptions(this.props.device as Device, false, false)
         );
 
         this.socket = io('https://api.showveo.com');
@@ -87,6 +86,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
                             thumbTintColor={loading ? Colours.background.light : Colours.highlight.default}
                             disabled={this.state.loading}
                             value={this.state.elapsed}
+                            onSlidingComplete={(elapsed: number) => this.onSeek(elapsed)}
                         />
 
                         <View style={styles.timeContainer}>
@@ -99,7 +99,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
                         <TouchableOpacity
                             style={styles.buttonWrapper}
                             disabled={this.state.loading}
-                            onPress={() => this.onSeekBackward()}
+                            onPress={() => this.onSeek(Math.max(0, this.state.elapsed - 30))}
                         >
                             <Ionicons
                                 style={[styles.buttonIcon, styles.seekBackButtonIcon, loading ? styles.loadingText : {}]}
@@ -125,7 +125,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
                         <TouchableOpacity
                             style={styles.buttonWrapper}
                             disabled={this.state.loading}
-                            onPress={() => this.onSeekForward()}
+                            onPress={() => this.onSeek(Math.min(playable.runtime, this.state.elapsed + 30))}
                         >
                             <Ionicons
                                 style={[styles.buttonIcon, loading ? styles.loadingText : {}]}
@@ -162,8 +162,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
             this.timeInterval = setInterval(() => this.setState({ elapsed: this.state.elapsed+1 }), 1000);
     }
 
-    private async onPlayClicked()
-    {
+    private async onPlayClicked() {
         if (!this.props.device) return;
 
         clearInterval(this.timeInterval);
@@ -176,12 +175,9 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
         this.setState({ paused: !this.state.paused });
     }
 
-    private async onSeekBackward() {
-        
-    }
-
-    private async onSeekForward() {
-
+    private async onSeek(time: number) {
+        if (!this.props.device) return;
+        await DeviceService.seek(this.props.device, time);
     }
 }
 
