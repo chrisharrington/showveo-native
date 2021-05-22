@@ -87,6 +87,7 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
                         media={this.state.selectedMovie}
                         playable={this.state.selectedMovie}
                         device={this.state.selectedDevice}
+                        onError={this.props.onError}
                     />}
                 </Stack.Screen>
             </Stack.Navigator>

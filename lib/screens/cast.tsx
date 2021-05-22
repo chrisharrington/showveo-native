@@ -15,6 +15,7 @@ interface CastScreenProps {
     media: Media | null;
     playable: Playable | null;
     device: Device | null;
+    onError: (error: string) => void;
 }
 
 interface CastScreenState {
@@ -40,16 +41,21 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
     }
 
     async componentDidMount() {
-        this.castable = new Castable(
-            this.props.playable as Playable,
-            new PlayOptions(this.props.device as Device, false, false)
-        );
+        try {
+            this.castable = new Castable(
+                this.props.playable as Playable,
+                new PlayOptions(this.props.device as Device, false, false)
+            );
 
-        this.socket = io('https://api.showveo.com');
-        this.onStatusHandler = this.onStatus.bind(this);
-        this.socket.on('status', this.onStatusHandler);
+            this.socket = io('https://api.showveo.com');
+            this.onStatusHandler = this.onStatus.bind(this);
+            this.socket.on('status', this.onStatusHandler);
 
-        await DeviceService.cast(this.castable);
+            await DeviceService.cast(this.castable);
+        } catch (e) {
+            this.props.onError('An error has occurred while casting. Please try again later.');
+            this.props.navigation.navigate('movies');
+        }
     }
 
     componentWillUnmount() {
@@ -86,7 +92,8 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
                             thumbTintColor={loading ? Colours.background.light : Colours.highlight.default}
                             disabled={this.state.loading}
                             value={this.state.elapsed}
-                            onSlidingComplete={(elapsed: number) => this.onSeek(elapsed)}
+                            onValueChange={(time: number) => this.setState({ elapsed: time })}
+                            onSlidingComplete={(time: number) => this.onSeek(time)}
                         />
 
                         <View style={styles.timeContainer}>

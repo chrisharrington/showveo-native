@@ -13,8 +13,13 @@ import MoviesListScreen from './lib/screens/movies';
 import { Toast } from './lib/components/toast';
 import Colours from './lib/colours';
 
+import drawerContents from './lib/components/drawer';
 
 const Drawer = createDrawerNavigator();
+
+enum Screens {
+    Movies = 'Movies'
+}
 
 interface AppState {
     ready: boolean;
@@ -66,12 +71,20 @@ export default class App extends React.Component<{}, AppState> {
                     <Drawer.Navigator
                         initialRouteName='Movies'
                         drawerStyle={styles.drawer}
+                        openByDefault={true}
+                        drawerContent={props => {
+                            console.log(props.descriptors);
+                            return drawerContents({
+                                navigation: props.navigation,
+                                routes: props.state.routes
+                            });
+                        }}
                         drawerContentOptions={{
                             activeTintColor: '#0398fc',
                             inactiveTintColor: '#ffffff'
                         }}
                     >
-                        <Drawer.Screen name='Movies'>
+                        <Drawer.Screen name={Screens.Movies}>
                             {props => <MoviesListScreen
                                 navigation={props.navigation}
                                 devices={this.state.devices}
@@ -94,6 +107,10 @@ export default class App extends React.Component<{}, AppState> {
 const styles = StyleSheet.create({
     drawer: {
         backgroundColor: '#333333'
+    },
+
+    drawerContents: {
+
     },
 
     errorContainer: {
