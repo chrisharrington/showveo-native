@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, TouchableHighlight } from 'react-native';
-import { DrawerDescriptor, DrawerNavigationHelpers } from '@react-navigation/drawer/lib/typescript/src/types';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { Device } from 'showveo-lib';
 
 import Colours from '../colours';
+import { Navigation, Screen } from '../models';
 
 
 interface NavigationRoute {
@@ -10,28 +11,51 @@ interface NavigationRoute {
     name: string;
 }
 
-export default ({ navigation, routes } : { navigation: DrawerNavigationHelpers, routes: NavigationRoute[] }) : React.ReactNode => (
-    <View style={styles.drawer}>
-        <Text style={styles.drawerLabel}>Libraries</Text>
-        {routes.map((route: NavigationRoute) => (
-            <TouchableOpacity
-                style={styles.drawerItemTouchable}
-                key={route.key}
-                onPress={() => {
-                    navigation.navigate('movies');
-                    navigation.closeDrawer();
-                }}
-                activeOpacity={0.5}
-            >
-                <Text style={styles.drawerItemText}>{route.name}</Text>
-            </TouchableOpacity>
-        ))}
+interface DrawerContentsProps {
+    routes: NavigationRoute[];
+    navigation: Navigation;
+    activeDevices: Device[];
+}
 
-    </View>
-);
+export default class DrawerContents extends React.Component<DrawerContentsProps> {
+    render() {
+        const { routes, navigation, activeDevices } = this.props;
+        return <View style={styles.drawer}>
+            <Text style={styles.drawerLabel}>Libraries</Text>
+            {routes.map((route: NavigationRoute) => (
+                <TouchableOpacity
+                    style={styles.touchable}
+                    key={route.key}
+                    onPress={() => {
+                        navigation.navigate(Screen.Movies);
+                        navigation.closeDrawer();
+                    }}
+                    activeOpacity={0.5}
+                >
+                    <Text style={styles.label}>{route.name}</Text>
+                </TouchableOpacity>
+            ))}
+
+            <Text style={[styles.drawerLabel, styles.bigSpacing]}>Active Devices</Text>
+            {activeDevices.map((device: Device) => (
+                <TouchableOpacity
+                    style={styles.touchable}
+                    activeOpacity={0.5}
+                    onPress={() => {}}
+                    key={device.id}
+                >
+                    <Text style={styles.label}>{device.name}</Text>
+                    <Text style={styles.sublabel}>2 Fast 2 Furious</Text>
+                </TouchableOpacity>
+            ))}
+        </View>;
+    }
+}
 
 const styles = StyleSheet.create({
     drawer: {
+        flex: 1,
+        backgroundColor: Colours.background.default,
         paddingTop: (StatusBar.currentHeight || 0) + 25
     },
 
@@ -52,5 +76,28 @@ const styles = StyleSheet.create({
     drawerItemText: {
         color: Colours.text.default,
         fontSize: 18
+    },
+
+    bigSpacing: {
+        marginTop: 30
+    },
+
+    touchable: {
+        borderRadius: 5,
+        padding: 12,
+        backgroundColor: Colours.background.light,
+        marginTop: 10,
+        marginHorizontal: 15
+    },
+
+    label: {
+        color: Colours.text.default,
+        fontSize: 15
+    },
+
+    sublabel: {
+        color: Colours.text.lowlight,
+        fontSize: 12,
+        marginTop: 3
     }
 })

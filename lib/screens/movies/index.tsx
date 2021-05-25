@@ -1,9 +1,7 @@
 import * as React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, TouchableHighlight } from 'react-native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Device, Movie, MovieService } from 'showveo-lib';
 
-import CastScreen from '../cast';
 import Colours from '../../colours';
 import Menu from '../../components/menu';
 import Dimensions from '../../components/dimensions';
@@ -11,14 +9,12 @@ import Dimensions from '../../components/dimensions';
 import MoviesListScreen from './list';
 
 
-const Stack = createStackNavigator();
-
-
 interface MoviesScreenProps {
     navigation: any;
     devices: Device[];
     selectedDevice: Device | null;
     onError: (message: string) => void;
+    onMovieSelected: (movie: Movie) => void;
     onDeviceSelected: (device: Device) => void;
 }
 
@@ -61,24 +57,25 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
 
     render() {
         return <View style={{ flex: 1 }}>
-            <Stack.Navigator
+            <MoviesListScreen
+                navigation={this.props.navigation}
+                movies={this.state.movies}
+                onClick={(movie: Movie) => this.onMovieSelected(movie)}
+            />
+
+            <Menu<Device>
+                ref={c => this.slider = c as Menu<Device>}
+                renderItem={({ item, index }) => this.renderDevice(item, index)}
+                keyExtractor={(device: Device) => device.id}
+                data={this.props.devices}
+            />
+            {/* <Stack.Navigator
                 initialRouteName='movies'
                 screenOptions={{ headerShown: false }}
             >
                 <Stack.Screen name='movies'>
                     {props => <>
-                        <MoviesListScreen
-                            navigation={props.navigation}
-                            movies={this.state.movies}
-                            onClick={(movie: Movie) => this.onMovieSelected(movie)}
-                        />
-
-                        <Menu<Device>
-                            ref={c => this.slider = c as Menu<Device>}
-                            renderItem={({ item, index }) => this.renderDevice(item, index, props)}
-                            keyExtractor={(device: Device) => device.id}
-                            data={this.props.devices}
-                        />
+                        
                     </>}
                 </Stack.Screen>
                 <Stack.Screen name='cast'>
@@ -90,16 +87,16 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
                         onError={this.props.onError}
                     />}
                 </Stack.Screen>
-            </Stack.Navigator>
+            </Stack.Navigator> */}
         </View>;
     }
 
-    private renderDevice = (device: Device, index: number, props: any) => (
+    private renderDevice = (device: Device, index: number) => (
         <View style={styles.deviceContainer}>
             <TouchableOpacity
                 style={[styles.device, index === 0 ? styles.first : {}]}
                 key={device.id}
-                onPress={() => this.onDeviceSelected(device, props)}
+                onPress={() => this.onDeviceSelected(device)}
             >
                 <Text style={{ color: Colours.text.default }}>{device.name}</Text>
             </TouchableOpacity>
@@ -107,13 +104,13 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
     );
 
     private onMovieSelected(movie: Movie) {
-        this.setState({ selectedMovie: movie });
+        this.props.onMovieSelected(movie);
         this.slider.show();
     }
 
-    private onDeviceSelected(device: Device, props: any) {
+    private onDeviceSelected(device: Device) {
         this.setState({ selectedDevice: device });
-        props.navigation.navigate('cast');
+        this.props.onDeviceSelected(device);
         this.slider.hide();
     }
 }

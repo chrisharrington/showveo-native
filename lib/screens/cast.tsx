@@ -8,6 +8,7 @@ import { Device, Media, Playable, DeviceService, Castable, PlayOptions, Playable
 
 import BaseScreen from './base';
 import Colours from '../colours';
+import Dimensions from '../components/dimensions';
 
 
 interface CastScreenProps {
@@ -31,6 +32,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
     private timeInterval: any;
     private onStatusHandler: any;
     private socket: Socket;
+    private ignoreStatusUpdates: boolean = false;
 
     state = {
         subtitles: false,
@@ -82,6 +84,15 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
                 <Text style={styles.synopsis}>{media.synopsis}</Text>
 
                 <View style={styles.controls}>
+                    <View style={styles.subtitlesContainer}>
+                        <TouchableOpacity
+                            style={[styles.subtitlesButton, this.state.subtitles ? styles.subtitlesButtonSelected : {}]}
+                            onPress={() => this.onSubtitlesToggled()}
+                        >
+                            <Text style={styles.subtitlesText}>Subtitles</Text>
+                        </TouchableOpacity>
+                    </View>
+
                     <View style={styles.progressContainer}>
                         <Slider
                             style={styles.progressSlider}
@@ -156,6 +167,8 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
     }
 
     private onStatus(message: any) {
+        if (this.ignoreStatusUpdates) return;
+
         this.setState({
             loading: message.state === 'BUFFERING' || message.state === 'IDLE',
             paused: message.state === 'PAUSED',
@@ -172,11 +185,14 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
     private async onPlayClicked() {
         if (!this.props.device) return;
 
+        this.ignoreStatusUpdates = true;
+        setTimeout(() => this.ignoreStatusUpdates = false, 500);
+
         clearInterval(this.timeInterval);
 
         const device = this.props.device;
         this.state.paused ?
-            await DeviceService.play(device) :
+            await DeviceService.unpause(device) :
             await DeviceService.pause(device);
 
         this.setState({ paused: !this.state.paused });
@@ -185,6 +201,18 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
     private async onSeek(time: number) {
         if (!this.props.device) return;
         await DeviceService.seek(this.props.device, time);
+    }
+
+    private async onSubtitlesToggled() {
+        const device = this.props.device;
+        if (!device) return;
+        
+        if (this.state.subtitles)
+            await DeviceService.disableSubtitles(device);
+        else
+            await DeviceService.enableSubtitles(device);
+
+        this.setState({ subtitles: !this.state.subtitles });
     }
 }
 
@@ -283,5 +311,32 @@ const styles = StyleSheet.create({
     },
 
     loadingButton: {
+    },
+
+    subtitlesContainer: {
+        height: 40,
+        marginBottom: 30,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
+    subtitlesButton: {
+        flex: 1,
+        backgroundColor: Colours.background.light,
+        padding: 10,
+        borderRadius: 5,
+        height: 40,
+        width: Dimensions.width() * 0.75
+    },
+
+    subtitlesButtonSelected: {
+        backgroundColor: Colours.highlight.default
+    },
+
+    subtitlesText: {
+        color: Colours.text.default,
+        flex: 1,
+        justifyContent: 'center',
+        alignSelf: 'center'
     }
 });
