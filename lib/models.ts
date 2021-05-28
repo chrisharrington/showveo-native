@@ -6,4 +6,5 @@ export enum Screen {
 export interface Navigation {
     navigate: (screen: Screen) => void;
     closeDrawer: () => void;
+    goBack: () => void;
 }

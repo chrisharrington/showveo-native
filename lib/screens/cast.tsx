@@ -2,17 +2,18 @@ import * as React from 'react';
 import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import io, { Socket } from 'socket.io-client';
 
 import { Device, Media, Playable, DeviceService, Castable, PlayOptions, PlayableType, CastState } from 'showveo-lib';
 
 import BaseScreen from './base';
 import Colours from '../colours';
 import Dimensions from '../components/dimensions';
+import { Socket, DeviceStatusMessage } from '../communication/socket';
+import { Navigation, Screen } from '../models';
 
 
 interface CastScreenProps {
-    navigation: any;
+    navigation: Navigation;
     media: Media | null;
     playable: Playable | null;
     device: Device | null;
@@ -30,9 +31,9 @@ interface CastScreenState {
 export default class CastScreen extends React.Component<CastScreenProps, CastScreenState> {
     private castable: Castable | null;
     private timeInterval: any;
-    private onStatusHandler: any;
-    private socket: Socket;
     private ignoreStatusUpdates: boolean = false;
+    private onStatusHandler: any;
+    private onFocusHandler: () => void;
 
     state = {
         subtitles: false,
@@ -44,24 +45,17 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
 
     async componentDidMount() {
         try {
-            this.castable = new Castable(
-                this.props.playable as Playable,
-                new PlayOptions(this.props.device as Device, false, false)
-            );
-
-            this.socket = io('https://api.showveo.com');
+            Socket.on('status', this.onStatusHandler);
             this.onStatusHandler = this.onStatus.bind(this);
-            this.socket.on('status', this.onStatusHandler);
-
-            await DeviceService.cast(this.castable);
         } catch (e) {
             this.props.onError('An error has occurred while casting. Please try again later.');
-            this.props.navigation.navigate('movies');
+            this.props.navigation.navigate(Screen.Movies);
         }
     }
 
     componentWillUnmount() {
-        this.socket.off('status', this.onStatusHandler);
+        Socket.off('status', this.onStatusHandler);
+        this.onFocusHandler();
     }
 
     render() {
@@ -166,8 +160,13 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
         return `${hours}:${minutes}:${seconds}`;
     }
 
-    private onStatus(message: any) {
+    private onStatus(message: DeviceStatusMessage) {
         if (this.ignoreStatusUpdates) return;
+
+        if (message.state === CastState.Finished) {
+           this.props.navigation.goBack();
+           return;
+        }
 
         this.setState({
             loading: message.state === 'BUFFERING' || message.state === 'IDLE',

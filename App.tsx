@@ -15,6 +15,7 @@ import CastScreen from './lib/screens/cast';
 
 import { Toast } from './lib/components/toast';
 import DrawerContents from './lib/components/drawer';
+import { Socket, DeviceStatusMessage as DeviceStatusMessage } from './lib/communication/socket';
 
 import Colours from './lib/colours';
 
@@ -35,6 +36,7 @@ interface State {
 export default class App extends React.Component<{}, State> {
     private toast: Toast;
     private onAppStateChangeHandler: (state: AppStateStatus) => void;
+    private onDeviceStatusMessageHandler: (message: DeviceStatusMessage) => void;
 
     state = {
         ready: false,
@@ -49,9 +51,12 @@ export default class App extends React.Component<{}, State> {
     async componentDidMount() {
         try {
             AppState.addEventListener('change', this.onAppStateChangeHandler = (state: AppStateStatus) => this.onAppStateChange(state));
+            Socket.on('status', this.onDeviceStatusMessageHandler = this.onDeviceStatusMessage.bind(this));
 
-            await Font.loadAsync({ 'Oswald': Oswald_400Regular });
-            const devices = await DeviceService.getAll();
+            const [ devices ] = await Promise.all([
+                DeviceService.getAll(),
+                Font.loadAsync({ 'Oswald': Oswald_400Regular })
+            ]);
 
             this.setState({
                 ready: true,
@@ -64,6 +69,7 @@ export default class App extends React.Component<{}, State> {
 
     componentWillUnmount() {
         AppState.removeEventListener('change', this.onAppStateChangeHandler);
+        Socket.off('status', this.onDeviceStatusMessageHandler);
     }
 
     render() {
@@ -86,7 +92,7 @@ export default class App extends React.Component<{}, State> {
                             <DrawerContents
                                 routes={props.state.routes.filter((route => route.name !== Screen.Cast))}
                                 navigation={props.navigation}
-                                activeDevices={this.state.devices.filter((device: Device) => device.castable)}
+                                activeDevices={this.state.devices.filter((device: Device) => device.media)}
                             />
                         )}
                     >
@@ -96,8 +102,6 @@ export default class App extends React.Component<{}, State> {
                                 devices={this.state.devices}
                                 selectedDevice={this.state.selectedDevice}
                                 onError={(message: string) => this.toast.error(message)}
-                                onMovieSelected={(movie: Movie) => this.setState({ selectedMedia: movie, selectedPlayable: movie })}
-                                onDeviceSelected={(device: Device) => this.onDeviceSelected(device, props.navigation as Navigation)}
                             />}
                         </Drawer.Screen>
                         <Drawer.Screen name={Screen.Cast}>
@@ -129,9 +133,14 @@ export default class App extends React.Component<{}, State> {
         this.setState({ status });
     }
 
-    private onDeviceSelected(device: Device, navigation: Navigation) {
-        this.setState({ selectedDevice: device });
-        navigation.navigate(Screen.Cast);
+    private onDeviceStatusMessage(message: DeviceStatusMessage) {
+        const devices = [...this.state.devices],
+            device = devices.find((device: Device) => device.id === message.device) as Device | undefined;
+
+        if (device)
+            device.media = message.media;
+
+        this.setState({ devices });
     }
 }
 

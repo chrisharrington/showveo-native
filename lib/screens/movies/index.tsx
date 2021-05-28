@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { Device, Movie, MovieService } from 'showveo-lib';
+import { Castable, Device, DeviceService, Movie, MovieService, Playable, PlayOptions } from 'showveo-lib';
 
 import Colours from '../../colours';
 import Menu from '../../components/menu';
@@ -14,12 +14,11 @@ interface MoviesScreenProps {
     devices: Device[];
     selectedDevice: Device | null;
     onError: (message: string) => void;
-    onMovieSelected: (movie: Movie) => void;
-    onDeviceSelected: (device: Device) => void;
 }
 
 interface MoviesScreenState {
     loading: boolean;
+    movie: Movie | null;
     movies: Movie[];
     tileWidth: number;
     deviceListVisible: boolean;
@@ -34,6 +33,7 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
 
     state = {
         loading: true,
+        movie: null,
         movies: [],
         tileWidth: 0,
         deviceListVisible: false,
@@ -69,25 +69,6 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
                 keyExtractor={(device: Device) => device.id}
                 data={this.props.devices}
             />
-            {/* <Stack.Navigator
-                initialRouteName='movies'
-                screenOptions={{ headerShown: false }}
-            >
-                <Stack.Screen name='movies'>
-                    {props => <>
-                        
-                    </>}
-                </Stack.Screen>
-                <Stack.Screen name='cast'>
-                    {props => <CastScreen
-                        navigation={props.navigation}
-                        media={this.state.selectedMovie}
-                        playable={this.state.selectedMovie}
-                        device={this.state.selectedDevice}
-                        onError={this.props.onError}
-                    />}
-                </Stack.Screen>
-            </Stack.Navigator> */}
         </View>;
     }
 
@@ -104,14 +85,23 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
     );
 
     private onMovieSelected(movie: Movie) {
-        this.props.onMovieSelected(movie);
+        this.setState({ movie });
         this.slider.show();
     }
 
-    private onDeviceSelected(device: Device) {
+    private async onDeviceSelected(device: Device) {
+        const movie = this.state.movie;
+        if (!movie) return;
+
         this.setState({ selectedDevice: device });
-        this.props.onDeviceSelected(device);
         this.slider.hide();
+
+        const castable = new Castable(
+            movie,
+            new PlayOptions(device, false, false)
+        );
+
+        await DeviceService.cast(castable);
     }
 }
 

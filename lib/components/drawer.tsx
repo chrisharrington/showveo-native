@@ -45,7 +45,7 @@ export default class DrawerContents extends React.Component<DrawerContentsProps>
                     key={device.id}
                 >
                     <Text style={styles.label}>{device.name}</Text>
-                    <Text style={styles.sublabel}>2 Fast 2 Furious</Text>
+                    {device.media && <Text style={styles.sublabel}>{device.media}</Text>}
                 </TouchableOpacity>
             ))}
         </View>;
