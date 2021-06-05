@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
 
-import Colours from '../colours';
+import Colours from '@lib/colours';;
 
 
 export class SelectItem {

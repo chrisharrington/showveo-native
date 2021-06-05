@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
-import { Device } from 'showveo-lib';
 
-import Colours from '../colours';
-import { Navigation, Screen } from '../models';
+import { Device } from '@lib/models';
+import Colours from '@lib/colours';;
+import { Navigation, Screen } from '@lib/models';
 
 
 interface NavigationRoute {
@@ -45,7 +45,7 @@ export default class DrawerContents extends React.Component<DrawerContentsProps>
                     key={device.id}
                 >
                     <Text style={styles.label}>{device.name}</Text>
-                    {device.media && <Text style={styles.sublabel}>{device.media}</Text>}
+                    {/* {device.media && <Text style={styles.sublabel}>{device.media}</Text>} */}
                 </TouchableOpacity>
             ))}
         </View>;

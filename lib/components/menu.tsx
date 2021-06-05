@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View, StyleSheet, Animated, Easing, FlatList, TouchableOpacity, BackHandler } from 'react-native';
-import Colours from '../colours';
+import Colours from '@lib/colours';
 import Dimensions from './dimensions';
 
 

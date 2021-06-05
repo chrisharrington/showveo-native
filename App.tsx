@@ -7,15 +7,15 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import { Oswald_400Regular } from '@expo-google-fonts/oswald';
 
-import { Device, DeviceService, Media, Movie, Playable } from 'showveo-lib';
-import { Screen, Navigation } from './lib/models';
+import { Screen, Device, Media, Movie, Playable } from './lib/models';
 
 import MoviesListScreen from './lib/screens/movies';
 import CastScreen from './lib/screens/cast';
 
 import { Toast } from './lib/components/toast';
 import DrawerContents from './lib/components/drawer';
-import { Socket, DeviceStatusMessage as DeviceStatusMessage } from './lib/communication/socket';
+import { Socket } from './lib/communication/socket';
+import { MessageType } from './lib/communication/types';
 
 import Colours from './lib/colours';
 
@@ -24,10 +24,12 @@ const Drawer = createDrawerNavigator();
 
 interface State {
     ready: boolean;
-    devices: Device[];
     selectedDevice: Device | null;
     error: string | null;
     status: AppStateStatus;
+
+    devices: Device[];
+    movies: Movie[];
 
     selectedMedia: Media | null;
     selectedPlayable: Playable | null;
@@ -35,15 +37,21 @@ interface State {
 
 export default class App extends React.Component<{}, State> {
     private toast: Toast;
+
     private onAppStateChangeHandler: (state: AppStateStatus) => void;
-    private onDeviceStatusMessageHandler: (message: DeviceStatusMessage) => void;
+    private onDeviceStatusMessageHandler: (payload: any) => void;
+    private onDevicesReceivedHandler: (payload: ({ devices: Device[] })) => void;
+    private onMoviesReceivedHandler: (payload: ({ movies: Movie[] })) => void;
 
     state = {
         ready: false,
-        devices: [],
         selectedDevice: null,
         error: null,
         status: 'inactive' as AppStateStatus,
+
+        devices: [],
+        movies: [],
+
         selectedMedia: null,
         selectedPlayable: null
     }
@@ -51,17 +59,14 @@ export default class App extends React.Component<{}, State> {
     async componentDidMount() {
         try {
             AppState.addEventListener('change', this.onAppStateChangeHandler = (state: AppStateStatus) => this.onAppStateChange(state));
-            Socket.on('status', this.onDeviceStatusMessageHandler = this.onDeviceStatusMessage.bind(this));
+            // Socket.on(MessageType.DeviceStatusResponse, this.onDeviceStatusMessageHandler = this.onDeviceStatusMessage.bind(this));
 
-            const [ devices ] = await Promise.all([
-                DeviceService.getAll(),
-                Font.loadAsync({ 'Oswald': Oswald_400Regular })
-            ]);
+            Socket.onAll<{ devices: Device[] }>(MessageType.GetDevicesResponse, this.onDevicesReceivedHandler = this.onDevicesReceived.bind(this));
+            Socket.onAll<{ movies: Movie[] }>(MessageType.GetMoviesResponse, this.onMoviesReceivedHandler = this.onMoviesReceived.bind(this));
 
-            this.setState({
-                ready: true,
-                devices
-            });
+            await Font.loadAsync({ 'Oswald': Oswald_400Regular })
+
+            this.setState({ ready: true });
         } catch (e) {
             this.setState({ error: e.message + '\r\n\r\n' + e.stack, ready: true });
         }
@@ -69,7 +74,9 @@ export default class App extends React.Component<{}, State> {
 
     componentWillUnmount() {
         AppState.removeEventListener('change', this.onAppStateChangeHandler);
-        Socket.off('status', this.onDeviceStatusMessageHandler);
+        Socket.off(MessageType.DeviceStatusResponse, this.onDeviceStatusMessageHandler);
+        Socket.off(MessageType.GetDevicesResponse, this.onDevicesReceivedHandler);
+        Socket.off(MessageType.GetMoviesResponse, this.onMoviesReceivedHandler);
     }
 
     render() {
@@ -92,7 +99,7 @@ export default class App extends React.Component<{}, State> {
                             <DrawerContents
                                 routes={props.state.routes.filter((route => route.name !== Screen.Cast))}
                                 navigation={props.navigation}
-                                activeDevices={this.state.devices.filter((device: Device) => device.media)}
+                                activeDevices={this.state.devices}
                             />
                         )}
                     >
@@ -100,12 +107,13 @@ export default class App extends React.Component<{}, State> {
                             {props => <MoviesListScreen
                                 navigation={props.navigation}
                                 devices={this.state.devices}
-                                selectedDevice={this.state.selectedDevice}
+                                movies={this.state.movies}
                                 onError={(message: string) => this.toast.error(message)}
                             />}
                         </Drawer.Screen>
                         <Drawer.Screen name={Screen.Cast}>
                             {props => <CastScreen
+                                route={props.route}
                                 navigation={props.navigation}
                                 media={this.state.selectedMedia}
                                 playable={this.state.selectedPlayable}
@@ -124,23 +132,28 @@ export default class App extends React.Component<{}, State> {
     }
 
     private async onAppStateChange(status: AppStateStatus) {
-        if (this.state.status !== 'active' && status === 'active') {        
-            this.setState({
-                devices: await DeviceService.getAll()
-            });
+        if (this.state.status !== 'active' && status === 'active') {
+            Socket.emit(MessageType.GetDevicesRequest);
+            Socket.emit(MessageType.GetMoviesRequest);
         }
-
-        this.setState({ status });
     }
 
-    private onDeviceStatusMessage(message: DeviceStatusMessage) {
+    private onDeviceStatusMessage(payload: any) {
         const devices = [...this.state.devices],
-            device = devices.find((device: Device) => device.id === message.device) as Device | undefined;
+            device = devices.find((device: Device) => device.id === payload.device) as Device | undefined;
 
-        if (device)
-            device.media = message.media;
+        // if (device)
+        //     device.media = payload.media;
 
         this.setState({ devices });
+    }
+
+    private onDevicesReceived(payload: ({ devices: Device[] })) {
+        this.setState({ devices: payload.devices.map((raw: any) => Device.fromRaw(raw)) });
+    }
+
+    private onMoviesReceived(payload: ({ movies: Movie[] })) {
+        this.setState({ movies: payload.movies.map((raw: any) => Movie.fromRaw(raw)) });
     }
 }
 

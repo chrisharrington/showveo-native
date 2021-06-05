@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, StyleSheet, StatusBar, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import Colours from '../colours';
+import Colours from '@lib/colours';
 
 
 interface BaseScreenProps {

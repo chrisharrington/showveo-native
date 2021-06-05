@@ -1,4 +1,4 @@
-import { Dimensions as ReactDimensions, ScaledSize } from "react-native";
+import { Dimensions as ReactDimensions, ScaledSize } from 'react-native';
 
 export default class Dimensions {
     private static dimensions: ScaledSize;

@@ -3,17 +3,19 @@ import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 
-import { Device, Media, Playable, DeviceService, Castable, PlayOptions, PlayableType, CastState } from 'showveo-lib';
-
-import BaseScreen from './base';
-import Colours from '../colours';
-import Dimensions from '../components/dimensions';
-import { Socket, DeviceStatusMessage } from '../communication/socket';
-import { Navigation, Screen } from '../models';
+import { Device, Media, Playable, CastState } from '@lib/models';
+import DeviceService from '@lib/data/devices';
+import BaseScreen from '@lib/screens/base';
+import Colours from '@lib/colours';
+import Dimensions from '@lib/components/dimensions';
+import { Socket } from '@lib/communication/socket';
+import { Navigation, Screen } from '@lib/models';
+import { MessageType } from '@lib/communication/types';
 
 
 interface CastScreenProps {
     navigation: Navigation;
+    route: any;
     media: Media | null;
     playable: Playable | null;
     device: Device | null;
@@ -29,11 +31,10 @@ interface CastScreenState {
 }
 
 export default class CastScreen extends React.Component<CastScreenProps, CastScreenState> {
-    private castable: Castable | null;
     private timeInterval: any;
     private ignoreStatusUpdates: boolean = false;
+    
     private onStatusHandler: any;
-    private onFocusHandler: () => void;
 
     state = {
         subtitles: false,
@@ -45,8 +46,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
 
     async componentDidMount() {
         try {
-            Socket.on('status', this.onStatusHandler);
-            this.onStatusHandler = this.onStatus.bind(this);
+            Socket.onAll(MessageType.DeviceStatusResponse, this.onStatusHandler = this.onStatus.bind(this));
         } catch (e) {
             this.props.onError('An error has occurred while casting. Please try again later.');
             this.props.navigation.navigate(Screen.Movies);
@@ -54,15 +54,17 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
     }
 
     componentWillUnmount() {
-        Socket.off('status', this.onStatusHandler);
-        this.onFocusHandler();
+        Socket.off(MessageType.DeviceStatusResponse, this.onStatusHandler);
     }
 
     render() {
-        const { media, playable, device } = this.props,
+        const params = this.props.route.params,
+            media = (params.movie || params.episode) as Media,
+            playable = (params.movie || params.episode) as Playable,
+            device = params.device as Device,
             loading = this.state.loading;
 
-        return media && playable && device ? <BaseScreen
+        return <BaseScreen
             title={device.name}
             navigation={this.props.navigation}
             back={true}
@@ -149,7 +151,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
                     </View>
                 </View>
             </View>
-        </BaseScreen> : <View />;
+        </BaseScreen>;
     }
 
     private toTimeString = (totalSeconds: number) => {
@@ -160,7 +162,7 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
         return `${hours}:${minutes}:${seconds}`;
     }
 
-    private onStatus(message: DeviceStatusMessage) {
+    private onStatus(message: any) {
         if (this.ignoreStatusUpdates) return;
 
         if (message.state === CastState.Finished) {
@@ -169,48 +171,46 @@ export default class CastScreen extends React.Component<CastScreenProps, CastScr
         }
 
         this.setState({
-            loading: message.state === 'BUFFERING' || message.state === 'IDLE',
-            paused: message.state === 'PAUSED',
+            loading: message.state === CastState.Buffering || message.state === CastState.Idle,
+            paused: message.state === CastState.Paused,
             elapsed: message.elapsed
         });
 
         if (this.timeInterval)
             clearInterval(this.timeInterval);
 
-        if (message.state === 'PLAYING')
+        if (message.state === CastState.Playing)
             this.timeInterval = setInterval(() => this.setState({ elapsed: this.state.elapsed+1 }), 1000);
     }
 
     private async onPlayClicked() {
-        if (!this.props.device) return;
+        const device = this.props.route?.params?.device;
+        if (!device)
+            return;
 
         this.ignoreStatusUpdates = true;
         setTimeout(() => this.ignoreStatusUpdates = false, 500);
 
         clearInterval(this.timeInterval);
 
-        const device = this.props.device;
-        this.state.paused ?
-            await DeviceService.unpause(device) :
-            await DeviceService.pause(device);
-
+        Socket.emit(this.state.paused ? MessageType.UnpauseRequest : MessageType.PauseRequest, { host: device.host });
         this.setState({ paused: !this.state.paused });
     }
 
     private async onSeek(time: number) {
-        if (!this.props.device) return;
-        await DeviceService.seek(this.props.device, time);
+        const device = this.props.route?.params?.device;
+        if (!device)
+            return;
+
+        Socket.emit(MessageType.SeekRequest, { host: device.host, time });
     }
 
     private async onSubtitlesToggled() {
-        const device = this.props.device;
-        if (!device) return;
+        const device = this.props.route?.params?.device;
+        if (!device)
+            return;
         
-        if (this.state.subtitles)
-            await DeviceService.disableSubtitles(device);
-        else
-            await DeviceService.enableSubtitles(device);
-
+        Socket.emit(MessageType.SubtitlesRequest, { host: device.host, enabled: !this.state.subtitles });
         this.setState({ subtitles: !this.state.subtitles });
     }
 }

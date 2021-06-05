@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 
-import Colours from '../colours';
+import Colours from '@lib/colours';
 
 export enum ToastType {
     Error,

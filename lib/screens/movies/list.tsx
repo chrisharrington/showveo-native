@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native'
-import { Movie } from 'showveo-lib';
 
-import ImageTile from '../../components/image-tile';
-
-import BaseScreen from '../base';
+import { Movie } from '@lib/models';
+import ImageTile from '@lib/components/image-tile';
+import BaseScreen from '@lib/screens/base';
 
 interface MoviesListScreenProps {
     navigation: any;

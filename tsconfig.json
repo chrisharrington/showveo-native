@@ -10,6 +10,10 @@
     "resolveJsonModule": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+        "@lib/*": ["lib/*"]
+    },
   }
 }

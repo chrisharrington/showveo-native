@@ -1,31 +1,27 @@
 import * as React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { Castable, Device, DeviceService, Movie, MovieService, Playable, PlayOptions } from 'showveo-lib';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-import Colours from '../../colours';
-import Menu from '../../components/menu';
-import Dimensions from '../../components/dimensions';
+import { Castable, Device, Movie, Navigation, PlayOptions, Screen } from '@lib/models';
+import DeviceService from '@lib/data/devices';
+import Colours from '@lib/colours';;
+import Menu from '@lib/components/menu';
+import Dimensions from '@lib/components/dimensions';
+import { Socket } from '@lib/communication/socket';
+import { MessageType, CastMessageRequest } from '@lib/communication/types';
 
 import MoviesListScreen from './list';
 
 
 interface MoviesScreenProps {
-    navigation: any;
+    navigation: Navigation;
     devices: Device[];
-    selectedDevice: Device | null;
+    movies: Movie[];
     onError: (message: string) => void;
 }
 
 interface MoviesScreenState {
     loading: boolean;
     movie: Movie | null;
-    movies: Movie[];
-    tileWidth: number;
-    deviceListVisible: boolean;
-    devicesHeight: number;
-    devicesPosition: Animated.Value;
-    selectedMovie: Movie | null;
-    selectedDevice: Device | null;
 }
 
 export default class MoviesScreen extends React.Component<MoviesScreenProps, MoviesScreenState> {
@@ -33,33 +29,14 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
 
     state = {
         loading: true,
-        movie: null,
-        movies: [],
-        tileWidth: 0,
-        deviceListVisible: false,
-        devicesHeight: 0,
-        devicesPosition: new Animated.Value(0),
-        selectedMovie: null,
-        selectedDevice: null
-    }
-
-    async componentDidMount() {
-        try {
-            this.setState({
-                loading: false,
-                movies: await MovieService.getAll(0, 1000)
-            });
-        } catch (e) {
-            console.error(e);
-            this.props.onError('An error has occurred while retrieving the list of movies. Please try again later.');
-        }
+        movie: null
     }
 
     render() {
         return <View style={{ flex: 1 }}>
             <MoviesListScreen
                 navigation={this.props.navigation}
-                movies={this.state.movies}
+                movies={this.props.movies}
                 onClick={(movie: Movie) => this.onMovieSelected(movie)}
             />
 
@@ -90,18 +67,14 @@ export default class MoviesScreen extends React.Component<MoviesScreenProps, Mov
     }
 
     private async onDeviceSelected(device: Device) {
-        const movie = this.state.movie;
+        const movie = this.state.movie as Movie | null;
         if (!movie) return;
 
-        this.setState({ selectedDevice: device });
         this.slider.hide();
 
-        const castable = new Castable(
-            movie,
-            new PlayOptions(device, false, false)
-        );
+        Socket.emit(MessageType.CastRequest, { movieId: movie._id, host: device.host });
 
-        await DeviceService.cast(castable);
+        this.props.navigation.navigate(Screen.Cast, { device, movie });
     }
 }
 
